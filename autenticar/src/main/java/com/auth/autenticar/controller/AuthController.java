@@ -12,6 +12,7 @@ import javax.crypto.SecretKey; // Importación necesaria
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:5173")
 public class AuthController {
 
     // Genera una clave segura para Base64 directamente

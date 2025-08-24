@@ -1,0 +1,40 @@
+package com.auth.autenticar.controller;
+
+import com.auth.autenticar.model.LoginRequest;
+import org.springframework.web.bind.annotation.*;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys; // Importación necesaria
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import javax.crypto.SecretKey; // Importación necesaria
+
+@RestController
+@RequestMapping("/api")
+public class AuthController {
+
+    // Genera una clave segura para Base64 directamente
+    private final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+
+    @PostMapping("/login")
+    public Map<String, String> login(@RequestBody LoginRequest loginRequest) {
+        Map<String, String> response = new HashMap<>();
+
+        if ("admin".equals(loginRequest.getNombre()) && "password".equals(loginRequest.getPassword())) {
+            
+            String token = Jwts.builder()
+                .setSubject(loginRequest.getNombre())
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + 3600000))
+                .signWith(SECRET_KEY) // El método ya acepta la clave generada
+                .compact();
+
+            response.put("token", token);
+            return response;
+        }
+
+        response.put("error", "Credenciales inválidas");
+        return response;
+    }
+}

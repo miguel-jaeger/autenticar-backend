@@ -17,11 +17,16 @@ public class AuthController {
     // Genera una clave segura para Base64 directamente
     private final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
+    // Hardcoded credentials for demonstration
+    private String currentPassword = "1qazxsw2";
+    private String currentUsername = "admin";
+
+
     @PostMapping("/login")
     public Map<String, String> login(@RequestBody LoginRequest loginRequest) {
         Map<String, String> response = new HashMap<>();
 
-        if ("admin".equals(loginRequest.getNombre()) && "password".equals(loginRequest.getPassword())) {
+        if (currentUsername.equals(loginRequest.getNombre()) && currentPassword.equals(loginRequest.getPassword())) {
             
             String token = Jwts.builder()
                 .setSubject(loginRequest.getNombre())

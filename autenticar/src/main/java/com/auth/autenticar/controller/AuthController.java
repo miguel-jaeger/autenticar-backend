@@ -1,6 +1,9 @@
 package com.auth.autenticar.controller;
 
 import com.auth.autenticar.model.LoginRequest;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -24,7 +27,7 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    public Map<String, String> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest loginRequest) {
         Map<String, String> response = new HashMap<>();
 
         if (currentUsername.equals(loginRequest.getNombre()) && currentPassword.equals(loginRequest.getPassword())) {
@@ -37,10 +40,11 @@ public class AuthController {
                 .compact();
 
             response.put("token", token);
-            return response;
+            return ResponseEntity.ok(response);
         }
 
         response.put("error", "Credenciales inválidas");
-        return response;
+        // Error: código de estado 401 Unauthorized
+        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
 }

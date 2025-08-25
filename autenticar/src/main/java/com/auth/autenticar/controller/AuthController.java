@@ -1,6 +1,6 @@
 package com.auth.autenticar.controller;
 
-import com.auth.autenticar.model.LoginRequest;
+import com.auth.autenticar.model.ModeloUsuario;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,10 +27,10 @@ public class AuthController {
 
 
     @PostMapping("/login")
-    public ResponseEntity<Map<String, String>> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<Map<String, String>> login(@RequestBody ModeloUsuario loginRequest) {
         Map<String, String> response = new HashMap<>();
 
-        if (currentUsername.equals(loginRequest.getNombre()) && currentPassword.equals(loginRequest.getPassword())) {
+        if (currentUsername.equals(loginRequest.getNombre()) && currentPassword.equals(loginRequest.getContrasena())) {
             
             String token = Jwts.builder()
                 .setSubject(loginRequest.getNombre())

@@ -24,17 +24,22 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.ui.Model;
 
 import org.mindrot.jbcrypt.BCrypt;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @RequestMapping("/api/usuarios")
 @CrossOrigin(origins = "*")
 public class ControladorUsuario {
+
+    private final Logger log = LoggerFactory.getLogger(ControladorUsuario.class);
 
     @Autowired
     private ServicioUsuario servicioUsuario;
@@ -48,15 +53,86 @@ public class ControladorUsuario {
     }
 
     // Adicionar
+
+    /*
+     * @PostMapping
+     * public ModeloUsuario salvarUsuario(@RequestBody ModeloUsuario usuario) {
+     * usuario.setContrasena(this.claveEncriptada(usuario.getContrasena()));
+     * return this.servicioUsuario.guardarUsuario(usuario);
+     * }
+     */
+    // Guardar nuevo usuario
     @PostMapping
-    public ModeloUsuario salvarUsuario(@RequestBody ModeloUsuario usuario) {
-        usuario.setContrasena(this.claveEncriptada(usuario.getContrasena()));
-        return this.servicioUsuario.guardarUsuario(usuario);
+    public ResponseEntity<Map<String, String>> salvarUsuario(@RequestBody ModeloUsuario usuario) {
+        Map<String, String> response = new HashMap<>();
+
+        /*
+         * System.out.println("=== CREAR USUARIO ===");
+         * System.out.println("Correo: " + usuario.getCorreo());
+         * System.out.println("Password ANTES de hashear: [" + usuario.getContrasena() +
+         * "]");
+         * System.out.println("Longitud ANTES: " + usuario.getContrasena().length());
+         */
+
+        // Verificar si ya viene hasheada (posible error del frontend)
+        if (isBCryptHash(usuario.getContrasena())) {
+            // System.out.println("ADVERTENCIA: La contraseña YA viene hasheada desde el
+            // frontend");
+            // response.put("error", "La contraseña no debe estar hasheada. Envía la
+            // contraseña en texto plano.");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        // Guardar password original para prueba posterior
+        String passwordOriginal = usuario.getContrasena();
+
+        // Hashear la contraseña
+        String passwordHasheada = this.claveEncriptada(passwordOriginal);
+        /*
+         * System.out.println("Password DESPUÉS de hashear: [" + passwordHasheada +
+         * "]");
+         * System.out.println("Longitud DESPUÉS: " + passwordHasheada.length());
+         */
+
+        usuario.setContrasena(passwordHasheada);
+
+        // Verificar que el setter funcionó
+        // System.out.println("Password en objeto ANTES de save: [" +
+        // usuario.getContrasena() + "]");
+
+        ModeloUsuario guardado = this.servicioUsuario.guardarUsuario(usuario);
+
+        // Verificar qué se guardó realmente
+        // System.out.println("Password en objeto DESPUÉS de save: [" +
+        // guardado.getContrasena() + "]");
+
+        // Leer directamente de BD para confirmar
+        ModeloUsuario verificacion = this.servicioUsuario.obtenerPorCorreo(guardado.getCorreo());
+        // System.out.println("Password leída de BD: [" + verificacion.getContrasena() +
+        // "]");
+
+        // Prueba inmediata: ¿Funciona BCrypt con lo que se guardó?
+        boolean pruebaInmediata = BCrypt.checkpw(passwordOriginal, verificacion.getContrasena());
+        // System.out.println("Prueba INMEDIATA BCrypt.checkpw(\"" + passwordOriginal +
+        // "\", hashGuardado): " + pruebaInmediata);
+
+        // System.out.println("====================");
+
+        guardado.setContrasena(null); // No devolver el hash
+
+        response.put("mensaje", "Usuario creado exitosamente");
+        response.put("correo", guardado.getCorreo());
+        response.put("pruebaInmediata", String.valueOf(pruebaInmediata));
+
+        if (!pruebaInmediata) {
+            response.put("advertencia", "La contraseña NO se guardó correctamente. Revisa los logs.");
+        }
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping
     public ModeloUsuario actualizarUsuario(@RequestBody ModeloUsuario usuario) {
-        // usuario.setContrasena(this.claveEncriptada(usuario.getContrasena()));
         return this.servicioUsuario.actualizarUsuario(usuario);
     }
 
@@ -65,46 +141,220 @@ public class ControladorUsuario {
         this.servicioUsuario.eliminarUsuario(usuario);
     }
 
+    // ENDPOINT: Actualizar contraseña de un usuario
+    @PostMapping("/actualizar-password")
+    public ResponseEntity<Map<String, String>> actualizarPassword(@RequestBody Map<String, String> datos) {
+        Map<String, String> response = new HashMap<>();
+
+        String correo = datos.get("correo");
+        String nuevaPassword = datos.get("password");
+
+        if (nuevaPassword == null) {
+            nuevaPassword = datos.get("contrasena");
+        }
+
+        if (correo == null || nuevaPassword == null) {
+            response.put("error", "Faltan parámetros");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        ModeloUsuario usuario = servicioUsuario.obtenerPorCorreo(correo);
+
+        if (usuario == null) {
+            response.put("error", "Usuario no encontrado");
+            return ResponseEntity.notFound().build();
+        }
+
+        // Actualizar con hash nuevo
+        usuario.setContrasena(claveEncriptada(nuevaPassword));
+        servicioUsuario.actualizarUsuario(usuario);
+
+        response.put("mensaje", "Contraseña actualizada exitosamente");
+        response.put("correo", correo);
+        response.put("nuevoHash", usuario.getContrasena());
+
+        return ResponseEntity.ok(response);
+    }
+
     public String claveEncriptada(String clave) {
         return BCrypt.hashpw(clave, BCrypt.gensalt());
     }
 
-    /*
-     * @GetMapping("usuarios/autenticar")
-     * public String mostrarAutenticarUsuario(Model modelo) {
-     * ModeloUsuario usuario = new ModeloUsuario();
-     * modelo.addAttribute("usuario", usuario);
-     * return "autenticarUsuario";
-     * }
-     */
-
-    @PostMapping("/autenticarUsuario")
+    // MÉTODO DE AUTENTICACIÓN CORREGIDO
+    @PostMapping("/autenticar")
     public ResponseEntity<Map<String, String>> autenticarUsuario(@RequestBody ModeloUsuario usuario) {
         Map<String, String> response = new HashMap<>();
-        System.out.println("usuario.getCorreo()" + usuario.getCorreo());
-        System.out.println("usuario.getContrasena()" + usuario.getContrasena());
-        boolean valida = servicioUsuario.autenticarUsuario(usuario.getCorreo(), usuario.getContrasena());
-        System.out.println("valida" + valida);
+
+        if (usuario.getCorreo() == null || usuario.getContrasena() == null) {
+            response.put("error", "Correo o contraseña vacíos");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        // DEBUG: Imprimir lo que llega
+        /*
+         * System.out.println("=== DEBUG AUTENTICACIÓN ===");
+         * System.out.println("Correo recibido: [" + usuario.getCorreo() + "]");
+         * System.out.println("Contraseña recibida: [" + usuario.getContrasena() + "]");
+         * System.out.println("Longitud contraseña: " +
+         * usuario.getContrasena().length());
+         */
+
+        boolean valida = servicioUsuario.autenticarUsuario(
+                usuario.getCorreo().trim(),
+                usuario.getContrasena().trim());
+
+        /*
+         * System.out.println("Resultado validación: " + valida);
+         * System.out.println("===========================");
+         * 
+         * log.debug("Intento de autenticación para: {} - Resultado: {}",
+         * usuario.getCorreo(), valida);
+         */
+
         if (valida) {
             String token = Jwts.builder()
                     .setSubject(usuario.getCorreo())
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + 3600000))
-                    .signWith(SECRET_KEY) // El método ya acepta la clave generada
+                    .signWith(SECRET_KEY)
                     .compact();
 
             response.put("token", token);
+            response.put("mensaje", "Autenticación exitosa");
             return ResponseEntity.ok(response);
+        } else {
+            response.put("error", "Credenciales inválidas");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
-        response.put("error", "Credenciales inválidas");
-        // Error: código de estado 401 Unauthorized
-        return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
+    }
+
+    // Método auxiliar para encriptar contraseñas
+    /*
+     * / public String claveEncriptada(String clave) {
+     * return BCrypt.hashpw(clave, BCrypt.gensalt());
+     * }
+     * 
+     * 
+     * 
+     * // ENDPOINT TEMPORAL PARA CREAR USUARIO DE PRUEBA
+     * 
+     * @PostMapping("/crear-prueba")
+     * public ResponseEntity<Map<String, String>> crearUsuarioPrueba() {
+     * Map<String, String> response = new HashMap<>();
+     * 
+     * ModeloUsuario u = new ModeloUsuario();
+     * u.setCorreo("test@correo.com");
+     * u.setContrasena(claveEncriptada("1234")); // Hash BCrypt de "1234"
+     * 
+     * ModeloUsuario guardado = servicioUsuario.guardarUsuario(u);
+     * 
+     * response.put("mensaje", "Usuario de prueba creado");
+     * response.put("correo", guardado.getCorreo());
+     * response.put("hashPassword", guardado.getContrasena());
+     * 
+     * return ResponseEntity.ok(response);
+     * }
+     */
+
+    // ENDPOINT PARA VERIFICAR HASH DE UN USUARIO
+    @GetMapping("/verificar-hash/{correo}")
+    public ResponseEntity<Map<String, String>> verificarHash(@PathVariable String correo) {
+        Map<String, String> response = new HashMap<>();
+
+        ModeloUsuario usuario = servicioUsuario.obtenerPorCorreo(correo);
+
+        if (usuario == null) {
+            response.put("error", "Usuario no encontrado");
+            return ResponseEntity.notFound().build();
+        }
+
+        String hash = usuario.getContrasena();
+        boolean esBCrypt = isBCryptHash(hash);
+
+        response.put("correo", correo);
+        response.put("hash", hash);
+        response.put("esBCryptValido", String.valueOf(esBCrypt));
+        response.put("longitudHash", String.valueOf(hash != null ? hash.length() : 0));
+
+        return ResponseEntity.ok(response);
+    }
+
+    // Método auxiliar para verificar si es un hash BCrypt
+    private static boolean isBCryptHash(String s) {
+        return s != null && (s.startsWith("$2a$") || s.startsWith("$2b$") || s.startsWith("$2y$"));
+    }
+
+    @PostMapping("/test-bcrypt")
+    public ResponseEntity<Map<String, Object>> testBCrypt(@RequestBody Map<String, String> datos) {
+        Map<String, Object> response = new HashMap<>();
+
+        try {
+            String correo = datos.get("correo");
+            String passwordPlainText = datos.get("contrasena");
+
+            System.out.println("=== TEST BCRYPT ===");
+            System.out.println("Correo: " + correo);
+            System.out.println("Password: " + passwordPlainText);
+
+            if (correo == null || passwordPlainText == null) {
+                response.put("error", "Faltan parámetros correo o password");
+                return ResponseEntity.badRequest().body(response);
+            }
+
+            ModeloUsuario usuario = servicioUsuario.obtenerPorCorreo(correo);
+
+            if (usuario == null) {
+                response.put("error", "Usuario no encontrado");
+                return ResponseEntity.notFound().build();
+            }
+
+            String hashBD = usuario.getContrasena();
+
+            System.out.println("Hash en BD: " + hashBD);
+
+            // Prueba directa
+            boolean resultado = BCrypt.checkpw(passwordPlainText, hashBD);
+
+            System.out.println("Resultado: " + resultado);
+            System.out.println("==================");
+
+            response.put("correo", correo);
+            response.put("passwordRecibida", passwordPlainText);
+            response.put("hashEnBD", hashBD);
+            response.put("resultadoBCrypt", resultado);
+            response.put("longitudPassword", passwordPlainText.length());
+            response.put("longitudHash", hashBD.length());
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            response.put("error", e.getMessage());
+            response.put("stackTrace", e.getClass().getName());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 
     /*
      * @GetMapping("/autenticar404")
      * public String autenticarError(Model modelo) {
      * return "autenticar404";
+     * }
+     */
+
+    /*
+     * @PostMapping("/crearUsuarioPrueba")
+     * public ModeloUsuario crearUsuarioPrueba() {
+     * ModeloUsuario u = new ModeloUsuario();
+     * u.setCorreo("test@correo.com");
+     * u.setContrasena(claveEncriptada("1234")); // contraseña conocida
+     * return servicioUsuario.guardarUsuario(u);
+     * }
+     * 
+     * 
+     * private static boolean isBCryptHash(String s) {
+     * return s != null && (s.startsWith("$2a$") || s.startsWith("$2b$") ||
+     * s.startsWith("$2y$"));
      * }
      */
 

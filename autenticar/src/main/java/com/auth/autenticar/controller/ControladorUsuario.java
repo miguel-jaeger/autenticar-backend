@@ -30,9 +30,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.ui.Model;
 
 import org.mindrot.jbcrypt.BCrypt;
-@CrossOrigin(origins = "*")
+
 @RestController
 @RequestMapping("/api/usuarios")
+@CrossOrigin(origins = "*")
 public class ControladorUsuario {
 
     @Autowired

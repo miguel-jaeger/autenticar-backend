@@ -43,7 +43,7 @@ public class ServicioUsuario {
     }
 
     public boolean autenticarUsuario(String nombreUsuario, String password) {
-        System.out.println("=== SERVICIO - DEBUG AUTENTICACIÓN ===");
+       // System.out.println("=== SERVICIO - DEBUG AUTENTICACIÓN ===");
 
         // Validar inputs
         if (password == null || password.trim().isEmpty()) {

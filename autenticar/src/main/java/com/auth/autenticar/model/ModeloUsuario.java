@@ -24,7 +24,7 @@ public class ModeloUsuario {
     @Column(name = "correo")
     private String correo;
     
-    @Column(name = "contrasena")
+    @Column(name = "contrasena", length = 255, nullable = false)
     private String contrasena;
 
     public Long getIdPersona() {

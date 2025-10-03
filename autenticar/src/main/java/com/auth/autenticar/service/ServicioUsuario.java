@@ -56,17 +56,10 @@ public class ServicioUsuario {
             return false;
         }
 
-        // System.out.println("Password recibida en servicio: [" + password + "]");
-        // System.out.println("Longitud password: " + password.length());
+     
 
         if (password.startsWith("$2a$") || password.startsWith("$2b$") || password.startsWith("$2y$")) {
-            /*
-             * System.out.println(" ERROR CRÍTICO: La contraseña recibida YA ES UN HASH!");
-             * System.out.
-             * println(" El frontend/cliente está enviando el hash en lugar de texto plano"
-             * );
-             * System.out.println(" Debes enviar la contraseña SIN hashear");
-             */
+          
             return false;
         }
 
@@ -74,18 +67,10 @@ public class ServicioUsuario {
 
         // usuarioOpt.getContrasena() -> clave de base de datos
         if (usuarioOpt == null) {
-            // System.out.println("ERROR: Usuario no encontrado con correo: [" +
-            // nombreUsuario + "]");
+            
             return false;
         }
-        /*
-         * System.out.println("Usuario encontrado: " + usuarioOpt.getCorreo());
-         * 
-         * 
-         * System.out.println("Hash almacenado en BD: [" + hashBD + "]");
-         * System.out.println("Longitud del hash: " + (hashBD != null ? hashBD.length()
-         * : "NULL"));
-         */
+   
 
         // Verificar que el hash es válido
         String hashBD = usuarioOpt.getContrasena();
@@ -96,18 +81,14 @@ public class ServicioUsuario {
 
         // Verificar formato BCrypt
         if (!hashBD.startsWith("$2a$") && !hashBD.startsWith("$2b$") && !hashBD.startsWith("$2y$")) {
-            // System.out.println("ERROR: El hash en BD NO es un hash BCrypt válido");
-            // System.out.println("El hash debe comenzar con $2a$, $2b$ o $2y$");
+          
             return false;
         }
 
         try {
             // Realizar comparación
             boolean resultado = BCrypt.checkpw(password, hashBD);
-            /*
-             * System.out.println("Resultado BCrypt.checkpw: " + resultado);
-             * System.out.println("======================================");
-             */
+           
             return resultado;
         } catch (Exception e) {
             System.out.println("ERROR en BCrypt.checkpw: " + e.getMessage());

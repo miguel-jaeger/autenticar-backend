@@ -8,5 +8,5 @@ import com.auth.autenticar.model.ModeloUsuario;
 
 @Repository
 public interface IRepositorioUsuario extends JpaRepository<ModeloUsuario, Long> {
-    ModeloUsuario findByCorreo(String nombreUsuario);
+    ModeloUsuario findByCorreo(String correo);
 }

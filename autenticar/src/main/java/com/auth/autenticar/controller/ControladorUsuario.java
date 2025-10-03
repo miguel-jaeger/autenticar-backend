@@ -31,17 +31,14 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.ui.Model;
 
 import org.mindrot.jbcrypt.BCrypt;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 
 @RestController
 @RequestMapping("/api/usuarios")
 @CrossOrigin(origins = "*")
 public class ControladorUsuario {
 
-    private final Logger log = LoggerFactory.getLogger(ControladorUsuario.class);
-
-    @Autowired
+       @Autowired
     private ServicioUsuario servicioUsuario;
 
     private final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
@@ -52,34 +49,16 @@ public class ControladorUsuario {
         return servicioUsuario.listarUsuarios();
     }
 
-    // Adicionar
+    // Adicionar usuario
 
-    /*
-     * @PostMapping
-     * public ModeloUsuario salvarUsuario(@RequestBody ModeloUsuario usuario) {
-     * usuario.setContrasena(this.claveEncriptada(usuario.getContrasena()));
-     * return this.servicioUsuario.guardarUsuario(usuario);
-     * }
-     */
     // Guardar nuevo usuario
     @PostMapping
     public ResponseEntity<Map<String, String>> salvarUsuario(@RequestBody ModeloUsuario usuario) {
         Map<String, String> response = new HashMap<>();
 
-        /*
-         * System.out.println("=== CREAR USUARIO ===");
-         * System.out.println("Correo: " + usuario.getCorreo());
-         * System.out.println("Password ANTES de hashear: [" + usuario.getContrasena() +
-         * "]");
-         * System.out.println("Longitud ANTES: " + usuario.getContrasena().length());
-         */
-
         // Verificar si ya viene hasheada (posible error del frontend)
         if (isBCryptHash(usuario.getContrasena())) {
-            // System.out.println("ADVERTENCIA: La contraseña YA viene hasheada desde el
-            // frontend");
-            // response.put("error", "La contraseña no debe estar hasheada. Envía la
-            // contraseña en texto plano.");
+
             return ResponseEntity.badRequest().body(response);
         }
 
@@ -88,35 +67,16 @@ public class ControladorUsuario {
 
         // Hashear la contraseña
         String passwordHasheada = this.claveEncriptada(passwordOriginal);
-        /*
-         * System.out.println("Password DESPUÉS de hashear: [" + passwordHasheada +
-         * "]");
-         * System.out.println("Longitud DESPUÉS: " + passwordHasheada.length());
-         */
 
         usuario.setContrasena(passwordHasheada);
 
-        // Verificar que el setter funcionó
-        // System.out.println("Password en objeto ANTES de save: [" +
-        // usuario.getContrasena() + "]");
-
         ModeloUsuario guardado = this.servicioUsuario.guardarUsuario(usuario);
-
-        // Verificar qué se guardó realmente
-        // System.out.println("Password en objeto DESPUÉS de save: [" +
-        // guardado.getContrasena() + "]");
 
         // Leer directamente de BD para confirmar
         ModeloUsuario verificacion = this.servicioUsuario.obtenerPorCorreo(guardado.getCorreo());
-        // System.out.println("Password leída de BD: [" + verificacion.getContrasena() +
-        // "]");
 
         // Prueba inmediata: ¿Funciona BCrypt con lo que se guardó?
         boolean pruebaInmediata = BCrypt.checkpw(passwordOriginal, verificacion.getContrasena());
-        // System.out.println("Prueba INMEDIATA BCrypt.checkpw(\"" + passwordOriginal +
-        // "\", hashGuardado): " + pruebaInmediata);
-
-        // System.out.println("====================");
 
         guardado.setContrasena(null); // No devolver el hash
 
@@ -190,26 +150,9 @@ public class ControladorUsuario {
             return ResponseEntity.badRequest().body(response);
         }
 
-        // DEBUG: Imprimir lo que llega
-        /*
-         * System.out.println("=== DEBUG AUTENTICACIÓN ===");
-         * System.out.println("Correo recibido: [" + usuario.getCorreo() + "]");
-         * System.out.println("Contraseña recibida: [" + usuario.getContrasena() + "]");
-         * System.out.println("Longitud contraseña: " +
-         * usuario.getContrasena().length());
-         */
-
         boolean valida = servicioUsuario.autenticarUsuario(
                 usuario.getCorreo().trim(),
                 usuario.getContrasena().trim());
-
-        /*
-         * System.out.println("Resultado validación: " + valida);
-         * System.out.println("===========================");
-         * 
-         * log.debug("Intento de autenticación para: {} - Resultado: {}",
-         * usuario.getCorreo(), valida);
-         */
 
         if (valida) {
             String token = Jwts.builder()
@@ -227,34 +170,6 @@ public class ControladorUsuario {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
         }
     }
-
-    // Método auxiliar para encriptar contraseñas
-    /*
-     * / public String claveEncriptada(String clave) {
-     * return BCrypt.hashpw(clave, BCrypt.gensalt());
-     * }
-     * 
-     * 
-     * 
-     * // ENDPOINT TEMPORAL PARA CREAR USUARIO DE PRUEBA
-     * 
-     * @PostMapping("/crear-prueba")
-     * public ResponseEntity<Map<String, String>> crearUsuarioPrueba() {
-     * Map<String, String> response = new HashMap<>();
-     * 
-     * ModeloUsuario u = new ModeloUsuario();
-     * u.setCorreo("test@correo.com");
-     * u.setContrasena(claveEncriptada("1234")); // Hash BCrypt de "1234"
-     * 
-     * ModeloUsuario guardado = servicioUsuario.guardarUsuario(u);
-     * 
-     * response.put("mensaje", "Usuario de prueba creado");
-     * response.put("correo", guardado.getCorreo());
-     * response.put("hashPassword", guardado.getContrasena());
-     * 
-     * return ResponseEntity.ok(response);
-     * }
-     */
 
     // ENDPOINT PARA VERIFICAR HASH DE UN USUARIO
     @GetMapping("/verificar-hash/{correo}")
@@ -334,28 +249,5 @@ public class ControladorUsuario {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
-
-    /*
-     * @GetMapping("/autenticar404")
-     * public String autenticarError(Model modelo) {
-     * return "autenticar404";
-     * }
-     */
-
-    /*
-     * @PostMapping("/crearUsuarioPrueba")
-     * public ModeloUsuario crearUsuarioPrueba() {
-     * ModeloUsuario u = new ModeloUsuario();
-     * u.setCorreo("test@correo.com");
-     * u.setContrasena(claveEncriptada("1234")); // contraseña conocida
-     * return servicioUsuario.guardarUsuario(u);
-     * }
-     * 
-     * 
-     * private static boolean isBCryptHash(String s) {
-     * return s != null && (s.startsWith("$2a$") || s.startsWith("$2b$") ||
-     * s.startsWith("$2y$"));
-     * }
-     */
 
 }

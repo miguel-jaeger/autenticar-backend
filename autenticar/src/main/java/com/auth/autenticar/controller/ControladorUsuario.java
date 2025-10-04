@@ -72,7 +72,7 @@ public class ControladorUsuario {
 
     // Adicionar usuario
     @PostMapping
-    @PreAuthorize("hasAuthority('ADMIN')") // Autorización usando ABAC/RBAC
+   // @PreAuthorize("hasAuthority('ADMIN')") // Autorización usando ABAC/RBAC
     public ResponseEntity<Map<String, String>> salvarUsuario(@RequestBody ModeloUsuario usuario) {
         Map<String, String> response = new HashMap<>();
 

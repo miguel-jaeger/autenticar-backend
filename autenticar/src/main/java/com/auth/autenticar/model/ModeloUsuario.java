@@ -24,8 +24,8 @@ public class ModeloUsuario {
     @Column(name = "correo")
     private String correo;
 
-     @Column(name = "rol")
-    private String rol;
+     @Column(name = "rol", nullable = false)
+    private String rol="USER"; // Valor por defecto
     
     public String getRol() {
         return rol;

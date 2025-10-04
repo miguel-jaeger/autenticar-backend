@@ -27,7 +27,48 @@ public class ServicioUsuario {
     }
 
     public ModeloUsuario actualizarUsuario(ModeloUsuario usuario) {
-        return repositorioUsuario.save(usuario);
+        // 1. Buscar el usuario existente
+        ModeloUsuario existente = repositorioUsuario.findById(usuario.getIdPersona())
+                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + usuario.getIdPersona()));
+        // 2. Actualizar SOLO los campos que vienen (no null)
+        if (usuario.getNombre() != null && !usuario.getNombre().trim().isEmpty()) {
+            existente.setNombre(usuario.getNombre().trim());
+        }
+
+        if (usuario.getApellido() != null && !usuario.getApellido().trim().isEmpty()) {
+            existente.setApellido(usuario.getApellido().trim());
+        }
+
+        if (usuario.getCorreo() != null && !usuario.getCorreo().trim().isEmpty()) {
+            existente.setCorreo(usuario.getCorreo().trim());
+        }
+
+        // 3. Password solo si viene
+        if (usuario.getContrasena() != null && !usuario.getContrasena().trim().isEmpty()) {
+            String passwordLimpio = usuario.getContrasena().trim();
+
+            System.out.println("Actualizando password...");
+
+            // Si NO es hash, hashear
+            if (!passwordLimpio.startsWith("$2a$") &&
+                    !passwordLimpio.startsWith("$2b$") &&
+                    !passwordLimpio.startsWith("$2y$")) {
+
+                String hashNuevo = BCrypt.hashpw(passwordLimpio, BCrypt.gensalt(10));
+                existente.setContrasena(hashNuevo);               
+            } else {               
+                existente.setContrasena(passwordLimpio);
+            }
+        } else {
+            System.out.println("No se actualiza password (no viene en request)");
+        }
+
+        // 4. Guardar el usuario existente con los cambios
+        ModeloUsuario guardado = repositorioUsuario.save(existente);      
+
+        return guardado;
+
+        // return repositorioUsuario.save(usuario);
     }
 
     public void eliminarUsuario(ModeloUsuario usuario) {
@@ -43,7 +84,7 @@ public class ServicioUsuario {
     }
 
     public boolean autenticarUsuario(String nombreUsuario, String password) {
-       // System.out.println("=== SERVICIO - DEBUG AUTENTICACIÓN ===");
+        // System.out.println("=== SERVICIO - DEBUG AUTENTICACIÓN ===");
 
         // Validar inputs
         if (password == null || password.trim().isEmpty()) {
@@ -56,10 +97,8 @@ public class ServicioUsuario {
             return false;
         }
 
-     
-
         if (password.startsWith("$2a$") || password.startsWith("$2b$") || password.startsWith("$2y$")) {
-          
+
             return false;
         }
 
@@ -67,10 +106,9 @@ public class ServicioUsuario {
 
         // usuarioOpt.getContrasena() -> clave de base de datos
         if (usuarioOpt == null) {
-            
+
             return false;
         }
-   
 
         // Verificar que el hash es válido
         String hashBD = usuarioOpt.getContrasena();
@@ -81,14 +119,14 @@ public class ServicioUsuario {
 
         // Verificar formato BCrypt
         if (!hashBD.startsWith("$2a$") && !hashBD.startsWith("$2b$") && !hashBD.startsWith("$2y$")) {
-          
+
             return false;
         }
 
         try {
             // Realizar comparación
             boolean resultado = BCrypt.checkpw(password, hashBD);
-           
+
             return resultado;
         } catch (Exception e) {
             System.out.println("ERROR en BCrypt.checkpw: " + e.getMessage());

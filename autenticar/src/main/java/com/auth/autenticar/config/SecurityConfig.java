@@ -13,7 +13,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
-@EnableMethodSecurity(prePostEnabled = true) // Permite usar @PreAuthorize
+//@EnableMethodSecurity(prePostEnabled = true) // Permite usar @PreAuthorize
+@EnableMethodSecurity
 public class SecurityConfig {
 
     @Autowired
@@ -27,7 +28,7 @@ public class SecurityConfig {
             
             // 2. Definir las reglas de Autorización (Quién accede a dónde)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/login").permitAll() // Permitir acceso libre al login
+                .requestMatchers("/api/**").permitAll() // Permitir acceso libre al login
                 .requestMatchers("/api/admin/**").hasAuthority("ADMIN") // Proteger por permiso/rol
                 .anyRequest().authenticated() // Cualquier otra URL requiere autenticación (token)
             )

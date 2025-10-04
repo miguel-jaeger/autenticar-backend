@@ -32,13 +32,12 @@ import org.springframework.ui.Model;
 
 import org.mindrot.jbcrypt.BCrypt;
 
-
 @RestController
 @RequestMapping("/api/usuarios")
 @CrossOrigin(origins = "*")
 public class ControladorUsuario {
 
-       @Autowired
+    @Autowired
     private ServicioUsuario servicioUsuario;
 
     private final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
@@ -53,43 +52,39 @@ public class ControladorUsuario {
 
     // Guardar nuevo usuario
     @PostMapping
-    public ResponseEntity<Map<String, String>> salvarUsuario(@RequestBody ModeloUsuario usuario) {
-        Map<String, String> response = new HashMap<>();
+public ResponseEntity<Map<String, String>> salvarUsuario(@RequestBody ModeloUsuario usuario) {
+    Map<String, String> response = new HashMap<>();
 
-        // Verificar si ya viene hasheada (posible error del frontend)
-        if (isBCryptHash(usuario.getContrasena())) {
+    //TRIM desde el inicio
+    String passwordOriginal = usuario.getContrasena().trim();
 
-            return ResponseEntity.badRequest().body(response);
-        }
-
-        // Guardar password original para prueba posterior
-        String passwordOriginal = usuario.getContrasena();
-
-        // Hashear la contraseña
-        String passwordHasheada = this.claveEncriptada(passwordOriginal);
-
-        usuario.setContrasena(passwordHasheada);
-
-        ModeloUsuario guardado = this.servicioUsuario.guardarUsuario(usuario);
-
-        // Leer directamente de BD para confirmar
-        ModeloUsuario verificacion = this.servicioUsuario.obtenerPorCorreo(guardado.getCorreo());
-
-        // Prueba inmediata: ¿Funciona BCrypt con lo que se guardó?
-        boolean pruebaInmediata = BCrypt.checkpw(passwordOriginal, verificacion.getContrasena());
-
-        guardado.setContrasena(null); // No devolver el hash
-
-        response.put("mensaje", "Usuario creado exitosamente");
-        response.put("correo", guardado.getCorreo());
-        response.put("pruebaInmediata", String.valueOf(pruebaInmediata));
-
-        if (!pruebaInmediata) {
-            response.put("advertencia", "La contraseña NO se guardó correctamente. Revisa los logs.");
-        }
-
-        return ResponseEntity.ok(response);
+    if (isBCryptHash(passwordOriginal)) {
+        response.put("error", "Password ya hasheado");
+        return ResponseEntity.badRequest().body(response);
     }
+
+    // Hashear la contraseña limpia
+    String passwordHasheada = this.claveEncriptada(passwordOriginal);
+    usuario.setContrasena(passwordHasheada);
+
+    ModeloUsuario guardado = this.servicioUsuario.guardarUsuario(usuario);
+
+    // Verificación inmediata
+    ModeloUsuario verificacion = this.servicioUsuario.obtenerPorCorreo(guardado.getCorreo());
+    boolean pruebaInmediata = BCrypt.checkpw(passwordOriginal, verificacion.getContrasena());
+
+    guardado.setContrasena(null);
+
+    response.put("mensaje", "Usuario creado exitosamente");
+    response.put("correo", guardado.getCorreo());
+    response.put("pruebaInmediata", String.valueOf(pruebaInmediata));
+
+    if (!pruebaInmediata) {
+        response.put("advertencia", "La contraseña NO se guardó correctamente");
+    }
+
+    return ResponseEntity.ok(response);
+}
 
     @PutMapping
     public ModeloUsuario actualizarUsuario(@RequestBody ModeloUsuario usuario) {
@@ -150,13 +145,13 @@ public class ControladorUsuario {
             return ResponseEntity.badRequest().body(response);
         }
 
-        boolean valida = servicioUsuario.autenticarUsuario(
-                usuario.getCorreo().trim(),
-                usuario.getContrasena().trim());
+        String correo = usuario.getCorreo().trim();
+        String contrasena = usuario.getContrasena().trim();
+        boolean valida = servicioUsuario.autenticarUsuario(correo, contrasena);
 
         if (valida) {
             String token = Jwts.builder()
-                    .setSubject(usuario.getCorreo())
+                    .setSubject(correo)
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + 3600000))
                     .signWith(SECRET_KEY)

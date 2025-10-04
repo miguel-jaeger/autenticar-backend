@@ -49,55 +49,72 @@ public class ControladorUsuario {
     }
 
     // Adicionar usuario
-
-    // Guardar nuevo usuario
     @PostMapping
-public ResponseEntity<Map<String, String>> salvarUsuario(@RequestBody ModeloUsuario usuario) {
-    Map<String, String> response = new HashMap<>();
+    public ResponseEntity<Map<String, String>> salvarUsuario(@RequestBody ModeloUsuario usuario) {
+        Map<String, String> response = new HashMap<>();
 
-    //TRIM desde el inicio
-    String passwordOriginal = usuario.getContrasena().trim();
+        // TRIM desde el inicio
+        String passwordOriginal = usuario.getContrasena().trim();
 
-    if (isBCryptHash(passwordOriginal)) {
-        response.put("error", "Password ya hasheado");
-        return ResponseEntity.badRequest().body(response);
+        if (isBCryptHash(passwordOriginal)) {
+            response.put("error", "Password ya hasheado");
+            return ResponseEntity.badRequest().body(response);
+        }
+
+        // Hashear la contraseña limpia
+        String passwordHasheada = this.claveEncriptada(passwordOriginal);
+        usuario.setContrasena(passwordHasheada);
+
+        ModeloUsuario guardado = this.servicioUsuario.guardarUsuario(usuario);
+
+        // Verificación inmediata
+        ModeloUsuario verificacion = this.servicioUsuario.obtenerPorCorreo(guardado.getCorreo());
+        boolean pruebaInmediata = BCrypt.checkpw(passwordOriginal, verificacion.getContrasena());
+
+        guardado.setContrasena(null);
+
+        response.put("mensaje", "Usuario creado exitosamente");
+        response.put("correo", guardado.getCorreo());
+        response.put("pruebaInmediata", String.valueOf(pruebaInmediata));
+
+        if (!pruebaInmediata) {
+            response.put("advertencia", "La contraseña NO se guardó correctamente");
+        }
+
+        return ResponseEntity.ok(response);
     }
 
-    // Hashear la contraseña limpia
-    String passwordHasheada = this.claveEncriptada(passwordOriginal);
-    usuario.setContrasena(passwordHasheada);
-
-    ModeloUsuario guardado = this.servicioUsuario.guardarUsuario(usuario);
-
-    // Verificación inmediata
-    ModeloUsuario verificacion = this.servicioUsuario.obtenerPorCorreo(guardado.getCorreo());
-    boolean pruebaInmediata = BCrypt.checkpw(passwordOriginal, verificacion.getContrasena());
-
-    guardado.setContrasena(null);
-
-    response.put("mensaje", "Usuario creado exitosamente");
-    response.put("correo", guardado.getCorreo());
-    response.put("pruebaInmediata", String.valueOf(pruebaInmediata));
-
-    if (!pruebaInmediata) {
-        response.put("advertencia", "La contraseña NO se guardó correctamente");
-    }
-
-    return ResponseEntity.ok(response);
-}
-
+    // Actualizar usuario
     @PutMapping
-    public ModeloUsuario actualizarUsuario(@RequestBody ModeloUsuario usuario) {
-        return this.servicioUsuario.actualizarUsuario(usuario);
+    public ResponseEntity<?> actualizarUsuario(@RequestBody ModeloUsuario usuario) {
+        try {
+           
+            if (usuario.getIdPersona() == null) {
+                return ResponseEntity.badRequest()
+                        .body(Map.of("error", "El ID es requerido"));
+            }
+
+            ModeloUsuario actualizado = this.servicioUsuario.actualizarUsuario(usuario);
+            actualizado.setContrasena(null); // No devolver el hash           
+            return ResponseEntity.ok(actualizado);
+
+        } catch (Exception e) {
+            System.err.println("ERROR: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", e.getMessage()));
+        }   
+
     }
 
+    // Eliminar usuario
     @DeleteMapping
     public void eliminarUsuario(@RequestBody ModeloUsuario usuario) {
         this.servicioUsuario.eliminarUsuario(usuario);
     }
 
     // ENDPOINT: Actualizar contraseña de un usuario
-    @PostMapping("/actualizar-password")
+    @PostMapping("/actualizar-contrasena")
     public ResponseEntity<Map<String, String>> actualizarPassword(@RequestBody Map<String, String> datos) {
         Map<String, String> response = new HashMap<>();
 

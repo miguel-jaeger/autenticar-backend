@@ -3,6 +3,7 @@ package com.auth.autenticar.controller;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.crypto.SecretKey;
@@ -10,11 +11,13 @@ import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.auth.autenticar.model.ModeloUsuario;
 import com.auth.autenticar.service.ServicioUsuario;
+import com.auth.autenticar.util.JwtUtil;
 
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -39,17 +42,37 @@ public class ControladorUsuario {
 
     @Autowired
     private ServicioUsuario servicioUsuario;
+     @SuppressWarnings("unused")
+    private JwtUtil jwtUtil;
 
     private final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
 
+        // 1. ENDPOINT PÚBLICO: Genera el token si las credenciales son correctas.
+    @PostMapping("/auth/login")
+    public ResponseEntity<String> login(@RequestBody ModeloUsuario usuario) {
+        
+        // **SIMULACIÓN** de verificación de credenciales en la base de datos
+        if ("admin".equals(usuario.getCorreo()) && "pass".equals(usuario.getContrasena()) && "pass".equals(usuario.getContrasena())) {
+            
+            //  Generar JWT con el Rol "ADMIN"
+            String token = jwtUtil.generateToken(usuario.getCorreo(), List.of("ADMIN"));
+            
+            // Devolver el token al cliente (Front-end)
+            return ResponseEntity.ok("{\"token\": \"" + token + "\"}");
+        }
+        return ResponseEntity.status(401).body("Credenciales inválidas");
+    }
+
     // Listar
     @GetMapping
+     @PreAuthorize("hasAuthority('ADMIN')") 
     public ArrayList<ModeloUsuario> listarUsuarios() {
         return servicioUsuario.listarUsuarios();
     }
 
     // Adicionar usuario
     @PostMapping
+    @PreAuthorize("hasAuthority('ADMIN')") // Autorización usando ABAC/RBAC
     public ResponseEntity<Map<String, String>> salvarUsuario(@RequestBody ModeloUsuario usuario) {
         Map<String, String> response = new HashMap<>();
 

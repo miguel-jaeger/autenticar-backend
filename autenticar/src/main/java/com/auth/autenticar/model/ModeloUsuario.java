@@ -23,7 +23,18 @@ public class ModeloUsuario {
 
     @Column(name = "correo")
     private String correo;
+
+     @Column(name = "rol")
+    private String rol;
     
+    public String getRol() {
+        return rol;
+    }
+
+     public void setRol(String rol) {
+         this.rol = rol;
+     }
+
     @Column(name = "contrasena", length = 255, nullable = false)
     private String contrasena;
 

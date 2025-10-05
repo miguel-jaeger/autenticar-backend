@@ -6,14 +6,15 @@ import io.jsonwebtoken.security.Keys;
 import javax.crypto.SecretKey;
 import org.springframework.stereotype.Component;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.List;
 
 @Component
 public class JwtUtil {
     // CLAVE SECRETA: Generada automáticamente para esta demostración.
-    @SuppressWarnings("deprecation")
-    private final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(
+    "miClaveSecretaSuperSeguraYLargaParaJWT123456789".getBytes(StandardCharsets.UTF_8));
 
     // Generar Token: Crea el token, lo firma y le pone una fecha de expiración
     // corta (30 min).

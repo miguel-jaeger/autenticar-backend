@@ -1,5 +1,6 @@
 package com.auth.autenticar.controller;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -41,7 +42,7 @@ import org.mindrot.jbcrypt.BCrypt;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin(origins = "*")
+//@CrossOrigin(origins = "*")
 public class ControladorUsuario {
 
     @Autowired
@@ -49,35 +50,19 @@ public class ControladorUsuario {
      @SuppressWarnings("unused")
     private JwtUtil jwtUtil;
 
-    private final SecretKey SECRET_KEY = Keys.secretKeyFor(SignatureAlgorithm.HS256);
+    private final SecretKey SECRET_KEY = Keys.hmacShaKeyFor(
+    "miClaveSecretaSuperSeguraYLargaParaJWT123456789".getBytes(StandardCharsets.UTF_8));
 
-        // 1. ENDPOINT PÚBLICO: Genera el token si las credenciales son correctas.
-    @PostMapping("/auth/login")
-    public ResponseEntity<String> login(@RequestBody ModeloUsuario usuario) {
-        
-        // **SIMULACIÓN** de verificación de credenciales en la base de datos
-        if ("admin".equals(usuario.getCorreo()) && "pass".equals(usuario.getContrasena()) && "pass".equals(usuario.getContrasena())) {
-            
-            //  Generar JWT con el Rol "ADMIN"
-            String token = jwtUtil.generateToken(usuario.getCorreo(), List.of("ADMIN"));
-            
-            // Devolver el token al cliente (Front-end)
-            return ResponseEntity.ok("{\"token\": \"" + token + "\"}");
-        }
-        return ResponseEntity.status(401).body("Credenciales inválidas");
-    }
 
     // Listar
     @GetMapping("/usuarios")
-    
     public ArrayList<ModeloUsuario> listarUsuarios() {
         return servicioUsuario.listarUsuarios();
     }
 
     // Adicionar usuario
     @PostMapping("/admin/registrar")
-    //@PreAuthorize("hasRole('ADMIN')")
-    //@PreAuthorize("hasAuthority('ADMIN')") // Autorización usando ABAC/RBAC
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> salvarUsuario(@RequestBody ModeloUsuario usuario) {
         Map<String, String> response = new HashMap<>();
 
@@ -136,7 +121,7 @@ public class ControladorUsuario {
     }
 
     // Eliminar usuario
-    @DeleteMapping
+    @DeleteMapping("/usuarios")
     public void eliminarUsuario(@RequestBody ModeloUsuario usuario) {
         this.servicioUsuario.eliminarUsuario(usuario);
     }
@@ -197,18 +182,13 @@ public class ControladorUsuario {
         if (valida) {
             ModeloUsuario user = servicioUsuario.obtenerPorCorreo(correo);
             System.out.println("user: "+user);
-            List<GrantedAuthority> grantedAuthorities = AuthorityUtils.commaSeparatedStringToAuthorityList(user.getRol());
             String token = Jwts.builder()
                     .setSubject(correo)
-                    .claim("authorities",
-						grantedAuthorities.stream()
-								.map(GrantedAuthority::getAuthority)
-								.collect(Collectors.toList()))
-                    .setIssuedAt(new Date())
-                    .setExpiration(new Date(System.currentTimeMillis() + 3600000))
-                    .signWith(SECRET_KEY)
+                    .claim("roles", List.of(user.getRol())) // Añade los roles al Payload (Body)
+                    .setIssuedAt(new Date(System.currentTimeMillis())) // Fecha de emisión
+                    .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30)) // Expira en 30 minutos
+                    .signWith(SECRET_KEY) // 🔑 Firma el token con la Clave Secreta
                     .compact();
-    
                 
             response.put("token", token);
             response.put("mensaje", "Autenticación exitosa");

@@ -31,6 +31,12 @@ public class ModeloUsuario {
         return rol;
     }
 
+     @Override
+    public String toString() {
+        return "ModeloUsuario [idPersona=" + idPersona + ", nombre=" + nombre + ", apellido=" + apellido + ", correo="
+                + correo + ", rol=" + rol + ", contrasena=" + contrasena + "]";
+    }
+
      public void setRol(String rol) {
          this.rol = rol;
      }

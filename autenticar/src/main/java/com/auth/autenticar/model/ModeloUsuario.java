@@ -27,6 +27,13 @@ public class ModeloUsuario {
     @Column(name = "contrasena", length = 255, nullable = false)
     private String contrasena;
 
+    @Column(name = "rol", nullable = false)
+    private String rol="USER"; // Valor por defecto
+    
+    public String getRol() {
+        return rol;
+    }
+
     public Long getIdPersona() {
         return idPersona;
     }

@@ -28,8 +28,8 @@ public class SecurityConfig {
             
             // 2. Definir las reglas de Autorización (Quién accede a dónde)
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/**").permitAll() // Permitir acceso libre al login
-                .requestMatchers("/api/admin/**").hasAuthority("ADMIN") // Proteger por permiso/rol
+                .requestMatchers("/api/usuarios/**").permitAll() // Permitir acceso libre al login
+                //.requestMatchers("/api/admin/**").hasAuthority("ADMIN") // Proteger por permiso/rol
                 .anyRequest().authenticated() // Cualquier otra URL requiere autenticación (token)
             )
             

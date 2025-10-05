@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.crypto.SecretKey;
 
@@ -12,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,6 +22,7 @@ import com.auth.autenticar.model.ModeloUsuario;
 import com.auth.autenticar.service.ServicioUsuario;
 import com.auth.autenticar.util.JwtUtil;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -36,7 +40,7 @@ import org.springframework.ui.Model;
 import org.mindrot.jbcrypt.BCrypt;
 
 @RestController
-@RequestMapping("/api/usuarios")
+@RequestMapping("/api")
 @CrossOrigin(origins = "*")
 public class ControladorUsuario {
 
@@ -64,15 +68,16 @@ public class ControladorUsuario {
     }
 
     // Listar
-    @GetMapping
-     @PreAuthorize("hasAuthority('ADMIN')") 
+    @GetMapping("/usuarios")
+    
     public ArrayList<ModeloUsuario> listarUsuarios() {
         return servicioUsuario.listarUsuarios();
     }
 
     // Adicionar usuario
-    @PostMapping
-   // @PreAuthorize("hasAuthority('ADMIN')") // Autorización usando ABAC/RBAC
+    @PostMapping("/admin/registrar")
+    //@PreAuthorize("hasRole('ADMIN')")
+    //@PreAuthorize("hasAuthority('ADMIN')") // Autorización usando ABAC/RBAC
     public ResponseEntity<Map<String, String>> salvarUsuario(@RequestBody ModeloUsuario usuario) {
         Map<String, String> response = new HashMap<>();
 
@@ -176,7 +181,8 @@ public class ControladorUsuario {
     }
 
     // MÉTODO DE AUTENTICACIÓN CORREGIDO
-    @PostMapping("/autenticar")
+    @SuppressWarnings("deprecation")
+    @PostMapping("/usuarios/autenticar")
     public ResponseEntity<Map<String, String>> autenticarUsuario(@RequestBody ModeloUsuario usuario) {
         Map<String, String> response = new HashMap<>();
 
@@ -188,15 +194,22 @@ public class ControladorUsuario {
         String correo = usuario.getCorreo().trim();
         String contrasena = usuario.getContrasena().trim();
         boolean valida = servicioUsuario.autenticarUsuario(correo, contrasena);
-
         if (valida) {
+            ModeloUsuario user = servicioUsuario.obtenerPorCorreo(correo);
+            System.out.println("user: "+user);
+            List<GrantedAuthority> grantedAuthorities = AuthorityUtils.commaSeparatedStringToAuthorityList(user.getRol());
             String token = Jwts.builder()
                     .setSubject(correo)
+                    .claim("authorities",
+						grantedAuthorities.stream()
+								.map(GrantedAuthority::getAuthority)
+								.collect(Collectors.toList()))
                     .setIssuedAt(new Date())
                     .setExpiration(new Date(System.currentTimeMillis() + 3600000))
                     .signWith(SECRET_KEY)
                     .compact();
-
+    
+                
             response.put("token", token);
             response.put("mensaje", "Autenticación exitosa");
             return ResponseEntity.ok(response);

@@ -184,7 +184,10 @@ public class ControladorUsuario {
             System.out.println("user: "+user);
             String token = Jwts.builder()
                     .setSubject(correo)
-                    .claim("roles", List.of(user.getRol())) // Añade los roles al Payload (Body)
+                    .claim("roles", List.of(user.getRol()))
+                    .claim("nombre", user.getNombre())
+                    .claim("apellido", user.getApellido())
+                    .claim("correo", user.getCorreo())
                     .setIssuedAt(new Date(System.currentTimeMillis())) // Fecha de emisión
                     .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30)) // Expira en 30 minutos
                     .signWith(SECRET_KEY) // 🔑 Firma el token con la Clave Secreta

@@ -58,10 +58,12 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             // 5. Validar el token y, si es válido, cargar los permisos (roles)
             if (jwtUtil.validateToken(jwt)) {
                 
+                List<String> roles = jwtUtil.getRolesFromToken(jwt);
+
                 // Obtener roles del token (EJEMPLO ABAC/RBAC)
-                List<SimpleGrantedAuthority> authorities = jwtUtil.getRolesFromToken(jwt).stream()
-                    .map(SimpleGrantedAuthority::new)
-                    .collect(Collectors.toList());
+                List<SimpleGrantedAuthority> authorities = roles.stream()
+                .map(role -> new SimpleGrantedAuthority("ROLE_" + role))
+                .collect(Collectors.toList());
 
                 // Crear el Objeto de Autenticación con el usuario y sus permisos
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(

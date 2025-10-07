@@ -127,7 +127,7 @@ public class ControladorUsuario {
     }
 
     // ENDPOINT: Actualizar contraseña de un usuario
-    @PostMapping("/actualizar-contrasena")
+    @PutMapping("/actualizar-contrasena")
     public ResponseEntity<Map<String, String>> actualizarPassword(@RequestBody Map<String, String> datos) {
         Map<String, String> response = new HashMap<>();
 

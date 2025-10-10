@@ -190,7 +190,7 @@ public class ControladorUsuario {
                     .claim("correo", user.getCorreo())
                     .setIssuedAt(new Date(System.currentTimeMillis())) // Fecha de emisión
                     .setExpiration(new Date(System.currentTimeMillis() + 1000 * 60 * 30)) // Expira en 30 minutos
-                    .signWith(SECRET_KEY) // 🔑 Firma el token con la Clave Secreta
+                    .signWith(SECRET_KEY) // Firma el token con la Clave Secreta
                     .compact();
                 
             response.put("token", token);

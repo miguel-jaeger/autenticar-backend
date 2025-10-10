@@ -139,9 +139,9 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.google.cloud</groupId>
-			<artifactId>spring-cloud-gcp-data-firestore</artifactId>
-			<version>6.2.3</version> <!-- o la versión compatible con tu Spring Boot -->
+			<groupId>com.google.firebase</groupId>
+			<artifactId>firebase-admin</artifactId>
+			<version>9.7.0</version>
 		</dependency>
 
 	</dependencies>

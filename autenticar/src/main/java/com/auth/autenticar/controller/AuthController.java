@@ -1,4 +1,4 @@
-package com.auth.autenticar.controller;
+/*package com.auth.autenticar.controller;
 
 import com.auth.autenticar.model.ModeloUsuario;
 
@@ -47,4 +47,4 @@ public class AuthController {
         // Error: código de estado 401 Unauthorized
         return new ResponseEntity<>(response, HttpStatus.UNAUTHORIZED);
     }
-}
+}*/

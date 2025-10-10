@@ -1,4 +1,4 @@
-package com.auth.autenticar.model;
+/*package com.auth.autenticar.model;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -7,7 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
-/*NUEVO MODELO*/
+/*NUEVO MODELO JPA
 @Entity
 @Table(name = "usuarios")
 public class ModeloUsuario {

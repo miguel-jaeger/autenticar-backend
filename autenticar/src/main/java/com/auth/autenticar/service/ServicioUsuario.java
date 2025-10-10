@@ -1,4 +1,4 @@
-package com.auth.autenticar.service;
+/*package com.auth.autenticar.service;
 
 import java.util.ArrayList;
 
@@ -8,7 +8,6 @@ import org.springframework.stereotype.Service;
 import com.auth.autenticar.model.ModeloUsuario;
 import com.auth.autenticar.repository.IRepositorioUsuario;
 
-import java.util.Optional;
 
 import org.mindrot.jbcrypt.BCrypt;
 
@@ -135,4 +134,4 @@ public class ServicioUsuario {
         }
     }
 
-}
+}*/

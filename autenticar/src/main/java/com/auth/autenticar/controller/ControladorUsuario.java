@@ -1,4 +1,4 @@
-package com.auth.autenticar.controller;
+/*package com.auth.autenticar.controller;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -281,4 +281,4 @@ public class ControladorUsuario {
         }
     }
 
-}
+}*/

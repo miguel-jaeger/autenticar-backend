@@ -52,7 +52,8 @@ public class SecurityConfig {
                                                 .requestMatchers("/api/usuarios/registrar").permitAll() // Registro
                                                                                                         // público
                                                 .requestMatchers("/api/actualizar-contrasena").permitAll()
-                                                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                                                .requestMatchers("/api/admin/**").permitAll()
+                                                //.requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
                                                 .anyRequest().authenticated())
 
                                 // 3. CRUCIAL: Configurar el sistema como Stateless (sin sesiones)

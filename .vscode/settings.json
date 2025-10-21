@@ -1,4 +1,15 @@
 {
     "java.configuration.updateBuildConfiguration": "interactive",
-    "java.compile.nullAnalysis.mode": "automatic"
+    "java.compile.nullAnalysis.mode": "automatic",
+    "cSpell.words": [
+        "ANTIGUO",
+        "apellido",
+        "autenticar",
+        "contrasena",
+        "correo",
+        "MODELO",
+        "nombre",
+        "NUEVO",
+        "Usuario"
+    ]
 }

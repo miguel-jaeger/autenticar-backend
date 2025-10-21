@@ -15,7 +15,8 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // aplica a todos los endpoints
-                        .allowedOrigins("http://localhost:5173") // permite cualquier origen
+                        .allowedOrigins("https://autenticar-backend.onrender.com") // permite cualquier origen
+                        .allowedOrigins("https://autenticar-frontend.onrender.com") // permite cualquier origen
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")                        
                         .exposedHeaders("Authorization")

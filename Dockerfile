@@ -10,6 +10,6 @@ FROM eclipse-temurin:21-jre
 WORKDIR /app/autenticar
 RUN mkdir -p /app/autenticar/data
 COPY --from=build /app/autenticar/target/*.jar app.jar
-# EXPOSE 8080
-CMD ["sh","-c","mkdir -p /app/autenticar/data && java -Dserver.port=${PORT:-8080} -jar /app/autenticar/app.jar"]
+# EXPOSE 4002
+CMD ["sh","-c","mkdir -p /app/autenticar/data && java -Dserver.port=${PORT:-4002} -jar /app/autenticar/app.jar"]
 

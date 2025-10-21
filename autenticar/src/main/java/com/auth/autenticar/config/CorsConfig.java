@@ -15,14 +15,15 @@ public class CorsConfig {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**") // aplica a todos los endpoints
-                        .allowedOrigins("http://localhost:5173","https://autenticar-backend.onrender.com", "https://autenticar-frontend.onrender.com") // permite cualquier origen
-                       
+                        .allowedOrigins("http://localhost:5173", "https://autenticar-backend.onrender.com",
+                                "https://autenticar-frontend.onrender.com") // permite cualquier origen
+
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
-                        .allowedHeaders("*")                        
+                        .allowedHeaders("*")
                         .exposedHeaders("Authorization")
                         .allowCredentials(true);
-                        //.allowCredentials(false) // ? AGREGA ESTO           
-                        //.exposedHeaders("Authorization");
+                // .allowCredentials(false) // ? AGREGA ESTO
+                // .exposedHeaders("Authorization");
             }
         };
     }

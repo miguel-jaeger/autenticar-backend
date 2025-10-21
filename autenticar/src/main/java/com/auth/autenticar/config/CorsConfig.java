@@ -20,7 +20,7 @@ public class CorsConfig {
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")                        
                         .exposedHeaders("Authorization")
-                        .allowCredentials(true);
+                        //.allowCredentials(true);
                         //.allowCredentials(false) // ? AGREGA ESTO           
                         //.exposedHeaders("Authorization");
             }

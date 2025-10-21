@@ -11,7 +11,7 @@ import jakarta.persistence.Table;
 @Entity
 @Table(name = "usuarios")
 public class ModeloUsuario {
-     @Id
+    @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long idPersona;
 
@@ -19,27 +19,27 @@ public class ModeloUsuario {
     private String nombre;
 
     @Column(name = "apellido")
-    private String apellido;  
+    private String apellido;
 
     @Column(name = "correo")
     private String correo;
 
-     @Column(name = "rol", nullable = false)
-    private String rol="USER"; // Valor por defecto
-    
+    @Column(name = "rol", nullable = false)
+    private String rol = "USER"; // Valor por defecto
+
     public String getRol() {
         return rol;
     }
 
-     @Override
+    @Override
     public String toString() {
         return "ModeloUsuario [idPersona=" + idPersona + ", nombre=" + nombre + ", apellido=" + apellido + ", correo="
                 + correo + ", rol=" + rol + ", contrasena=" + contrasena + "]";
     }
 
-     public void setRol(String rol) {
-         this.rol = rol;
-     }
+    public void setRol(String rol) {
+        this.rol = rol;
+    }
 
     @Column(name = "contrasena", length = 255, nullable = false)
     private String contrasena;
@@ -85,29 +85,31 @@ public class ModeloUsuario {
     }
 }
 
-/* MODELO ANTIGUO
-public class LoginRequest {
-    public String nombre;
-    public String password;
-
-    public LoginRequest(String nombre, String password) {
-        this.nombre = nombre;
-        this.password = password;
-    }
-
-    public String getNombre() {
-        return nombre;
-    }
-
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
-    }   
-}*/
+/*
+ * MODELO ANTIGUO
+ * public class LoginRequest {
+ * public String nombre;
+ * public String password;
+ * 
+ * public LoginRequest(String nombre, String password) {
+ * this.nombre = nombre;
+ * this.password = password;
+ * }
+ * 
+ * public String getNombre() {
+ * return nombre;
+ * }
+ * 
+ * public void setNombre(String nombre) {
+ * this.nombre = nombre;
+ * }
+ * 
+ * public String getPassword() {
+ * return password;
+ * }
+ * 
+ * public void setPassword(String password) {
+ * this.password = password;
+ * }
+ * }
+ */

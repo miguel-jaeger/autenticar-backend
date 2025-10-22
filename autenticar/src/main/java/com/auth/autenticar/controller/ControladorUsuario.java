@@ -62,7 +62,7 @@ public class ControladorUsuario {
 
     // Adicionar usuario
     @PostMapping("/admin/registrar")
-    //@PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Map<String, String>> salvarUsuario(@RequestBody ModeloUsuario usuario) {
         Map<String, String> response = new HashMap<>();
 
